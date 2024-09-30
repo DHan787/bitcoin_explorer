@@ -1,0 +1,11 @@
+{
+  "name": "bitcoin-explorer-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "bitcoin-explorer-backend": "file:",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "pg": "^8.6.0"
+  }
+}

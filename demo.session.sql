@@ -1,0 +1,5 @@
+CREATE TABLE block_data (
+    id SERIAL PRIMARY KEY,
+    block_height INT NOT NULL,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
