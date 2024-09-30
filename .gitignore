@@ -1,23 +1,62 @@
-# Node.js
-backend/node_modules/
-frontend/node_modules/
+# Ignore node_modules for both backend and frontend
 node_modules/
+
+# Ignore build output
+/build
+/dist
+/out
+.DS_Store
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# TypeScript
-*.tsbuildinfo
+# Dependency directories
+**/node_modules
 
-# Rust
+# Ignore package lock files
+package-lock.json
+
+# Ignore local environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore Docker-related files
+**/Dockerfile
+docker-compose.override.yml
+
+# Ignore Rust build outputs
 target/
 
-# Docker
-docker-compose.override.yml
-.env
+# Rust specific
+Cargo.lock
 
-# Logs
-*.log
+# Ignore macOS system files
+.DS_Store
 
-# IDE files
+# Ignore VSCode settings
 .vscode/
+
+# TypeScript specific
+*.tsbuildinfo
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore IDE/editor-specific files
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Ignore database files
+*.sql
