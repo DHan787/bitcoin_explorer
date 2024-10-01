@@ -10,12 +10,12 @@ A Bitcoin blockchain explorer that allows users to explore and analyze Bitcoin b
 
 ## Technologies Used
 
-- **Backend**: Rust
+- **Backend**: Rustn Node.js
 - **Frontend**: TypeScript, HTML
-- **Database**: SQL
+- **Database**: PostgreSQL
 - **Containerization**: Docker
 
 ## Acknowledgments
-Rust
-TypeScript
-Docker
+- Rust
+- TypeScript
+- Docker
