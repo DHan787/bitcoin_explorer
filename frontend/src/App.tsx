@@ -4,45 +4,56 @@
  * @Description: 
  */
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
-interface BlockData {
-    block_height: number;
-    timestamp: string;
-}
+// Register the necessary scales and components for Chart.js
+ChartJS.register(
+  CategoryScale,   // for the X-axis
+  LinearScale,     // for the Y-axis
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-const App: React.FC = () => {
-    const [blockHeight, setBlockHeight] = useState<BlockData | null>(null);
+const RealTimeChart = () => {
+  const [blockHeights, setBlockHeights] = useState<number[]>([]);
+  const [prices, setPrices] = useState<number[]>([]);
+  const [timestamps, setTimestamps] = useState<string[]>([]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get<BlockData>('http://localhost:5000/block-height');
-                setBlockHeight(response.data);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        };
+  useEffect(() => {
+    const socket = new WebSocket('ws://localhost:8080');
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setBlockHeights((prev) => [...prev, data.block_height]);
+      setPrices((prev) => [...prev, data.price]);
+      setTimestamps((prev) => [...prev, new Date().toLocaleTimeString()]);
+    };
 
-        fetchData();
-        const interval = setInterval(fetchData, 60000); // Poll every 60 seconds
+    return () => socket.close();
+  }, []);
 
-        return () => clearInterval(interval);
-    }, []);
+  const chartData = {
+    labels: timestamps,
+    datasets: [
+      {
+        label: 'Block Height',
+        data: blockHeights,
+        borderColor: 'blue',
+        fill: false,
+      },
+      {
+        label: 'Bitcoin Price (USD)',
+        data: prices,
+        borderColor: 'green',
+        fill: false,
+      },
+    ],
+  };
 
-    return (
-        <div>
-            <h1>Bitcoin Explorer</h1>
-            {blockHeight ? (
-                <div>
-                    <p>Latest Block Height: {blockHeight.block_height}</p>
-                    <p>Timestamp: {new Date(blockHeight.timestamp).toLocaleString()}</p>
-                </div>
-            ) : (
-                <p>Loading...</p>
-            )}
-        </div>
-    );
+  return <Line data={chartData} />;
 };
 
-export default App;
+export default RealTimeChart;
