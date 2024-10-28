@@ -16,6 +16,8 @@ services:
     build: ./rust_ingestion
     depends_on:
       - postgres
+    ports:
+      - "5001:5001"
 
   backend:
     build: ./backend

@@ -1,7 +1,11 @@
+use actix_cors::Cors;
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use futures_util::{SinkExt, StreamExt};
 use reqwest;
+use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::time::sleep;
@@ -23,6 +27,9 @@ struct MarketData {
 struct CoinMetrics {
     usd: f64,
 }
+struct PriceData {
+    price_usd: Decimal,
+}
 
 async fn fetch_block_height() -> Result<u32, reqwest::Error> {
     let response = reqwest::get("https://blockchain.info/latestblock")
@@ -42,7 +49,7 @@ async fn fetch_bitcoin_price() -> Result<f64, reqwest::Error> {
 }
 
 async fn websocket_server() {
-    let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+    let listener = TcpListener::bind("0.0.0.0:5001").await.unwrap();
 
     while let Ok((stream, _)) = listener.accept().await {
         tokio::spawn(async move {
@@ -85,6 +92,31 @@ async fn websocket_server() {
     }
 }
 
+async fn get_all_data() -> impl Responder {
+    let (client, connection) = tokio_postgres::connect(
+        "host=postgres user=postgres password=postgre dbname=bitcoin_explorer",
+        NoTls,
+    )
+    .await
+    .unwrap();
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+
+    let rows = client.query("SELECT block_height, price_usd, timestamp FROM block_data JOIN price_data ON block_data.timestamp = price_data.timestamp", &[]).await.unwrap();
+    let data: Vec<_> = rows.iter().map(|row| {
+        let block_height: i32 = row.get(0);
+        let price: f64 = row.get(1);
+        let timestamp: String = row.get(2);
+        serde_json::json!({ "block_height": block_height, "price": price, "timestamp": timestamp })
+    }).collect();
+
+    HttpResponse::Ok().json(data)
+}
+
 async fn run_ingestion() -> Result<(), Box<dyn std::error::Error>> {
     let (client, connection) = tokio_postgres::connect(
         "host=postgres user=postgres password=postgre dbname=bitcoin_explorer",
@@ -116,7 +148,6 @@ async fn run_ingestion() -> Result<(), Box<dyn std::error::Error>> {
         // Fetch off-chain Bitcoin price
         match fetch_bitcoin_price().await {
             Ok(price) => {
-                // Directly pass `f64` for NUMERIC
                 client
                     .execute(
                         "INSERT INTO price_data (price_usd) VALUES ($1::DOUBLE PRECISION)",
@@ -132,11 +163,21 @@ async fn run_ingestion() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-#[tokio::main]
-async fn main() {
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
     tokio::spawn(websocket_server());
+    tokio::spawn(async move {
+        if let Err(e) = run_ingestion().await {
+            eprintln!("Application error: {}", e);
+        }
+    });
 
-    if let Err(e) = run_ingestion().await {
-        eprintln!("Application error: {}", e);
-    }
+    HttpServer::new(|| {
+        App::new()
+            .wrap(Cors::permissive())
+            .route("/all-data", web::get().to(get_all_data))
+    })
+    .bind("0.0.0.0:5000")?
+    .run()
+    .await
 }
