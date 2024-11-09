@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy to GCE
       run: |
-        ssh -o StrictHostKeyChecking=no ginge2_h@34.171.207.200 << EOF
+        ssh -o StrictHostKeyChecking=no ginge2.h@gmail.com@34.171.207.200 << EOF
           cd ~/bitcoin_explorer
           git pull origin master
           sudo docker-compose down
