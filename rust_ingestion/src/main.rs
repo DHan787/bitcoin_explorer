@@ -102,20 +102,31 @@ async fn get_all_data() -> impl Responder {
 
     let rows = client
         .query(
-            "SELECT block_data.block_height, price_data.price_usd, block_data.block_timestamp \
-        FROM block_data \
-        JOIN price_data ON block_data.block_timestamp = price_data.price_timestamp",
+            "
+        SELECT b.block_height, p.price_usd, b.block_timestamp
+        FROM block_data b
+        LEFT JOIN LATERAL (
+            SELECT price_usd, price_timestamp
+            FROM price_data
+            WHERE price_timestamp <= b.block_timestamp
+            ORDER BY price_timestamp DESC
+            LIMIT 1
+        ) p ON true
+        ",
             &[],
         )
         .await
         .unwrap();
+
+    // 处理结果
     println!("fetched rows: {:?}", rows);
     let data: Vec<_> = rows.iter().map(|row| {
-        let block_height: i32 = row.get(0);
-        let price: f64 = row.get(1);
-        let timestamp: String = row.get(2);
-        serde_json::json!({ "block_height": block_height, "price": price, "timestamp": timestamp })
-    }).collect();
+    let block_height: i32 = row.get(0);
+    let price: f64 = row.get(1);
+    let timestamp: String = row.get(2);
+    serde_json::json!({ "block_height": block_height, "price": price, "timestamp": timestamp })
+}).collect();
+
     println!("fetched data: {:?}", data);
     HttpResponse::Ok().json(data)
 }
