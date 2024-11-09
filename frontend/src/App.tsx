@@ -27,7 +27,7 @@ const RealTimeChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/all-data');
+        const response = await fetch('http://0.0.0.0:5000/all-data');
         const data = await response.json();
 
         setBlockHeights(data.map((entry: any) => entry.block_height));
@@ -42,7 +42,7 @@ const RealTimeChart = () => {
 
   // Setup WebSocket for real-time updates
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:5001');
+    const socket = new WebSocket('ws://0.0.0.0:5001');
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setBlockHeights((prev) => [...prev, data.block_height]);
