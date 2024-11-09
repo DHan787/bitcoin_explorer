@@ -109,13 +109,14 @@ async fn get_all_data() -> impl Responder {
         )
         .await
         .unwrap();
+    println!("fetched rows: {:?}", rows);
     let data: Vec<_> = rows.iter().map(|row| {
         let block_height: i32 = row.get(0);
         let price: f64 = row.get(1);
         let timestamp: String = row.get(2);
         serde_json::json!({ "block_height": block_height, "price": price, "timestamp": timestamp })
     }).collect();
-
+    println!("fetched data: {:?}", data);
     HttpResponse::Ok().json(data)
 }
 
