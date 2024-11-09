@@ -27,9 +27,6 @@ struct MarketData {
 struct CoinMetrics {
     usd: f64,
 }
-struct PriceData {
-    price_usd: Decimal,
-}
 
 async fn fetch_block_height() -> Result<u32, reqwest::Error> {
     let response = reqwest::get("https://blockchain.info/latestblock")
