@@ -42,6 +42,7 @@ async fn fetch_bitcoin_price() -> Result<f64, reqwest::Error> {
     Ok(response.bitcoin.usd)
 }
 
+// TODO: 从数据库中获取数据，发送到websocket
 async fn websocket_server() {
     let listener = TcpListener::bind("0.0.0.0:5001").await.unwrap();
 
@@ -101,9 +102,9 @@ async fn get_all_data() -> impl Responder {
     });
 
     let rows = client
-    .query(
-        "
-        SELECT b.block_height, COALESCE(p.price_usd, latest_price.price_usd) AS price_usd, b.block_timestamp
+        .query(
+            "
+        SELECT b.block_height, COALESCE(p.price_usd, 0.0) AS price_usd, b.block_timestamp
         FROM block_data b
         LEFT JOIN LATERAL (
             SELECT price_usd, price_timestamp
@@ -112,17 +113,11 @@ async fn get_all_data() -> impl Responder {
             ORDER BY price_timestamp DESC
             LIMIT 1
         ) p ON true
-        LEFT JOIN LATERAL (
-            SELECT price_usd
-            FROM price_data
-            ORDER BY price_timestamp DESC
-            LIMIT 1
-        ) latest_price ON p.price_usd IS NULL
         ",
-        &[],
-    )
-    .await
-    .unwrap();
+            &[],
+        )
+        .await
+        .unwrap();
 
     // 处理结果
     println!("fetched rows: {:?}", rows);
@@ -131,7 +126,7 @@ async fn get_all_data() -> impl Responder {
         .map(|row| {
             let block_height: i32 = row.get(0);
             let price: f64 = row.get(1); // 这里由于确保有匹配数据，不再使用 Option
-            let timestamp: String = row.get(2);
+            let timestamp: String = row.get::<_, String>(2);
 
             serde_json::json!({
                 "block_height": block_height,
@@ -186,7 +181,7 @@ async fn run_ingestion() -> Result<(), Box<dyn std::error::Error>> {
             }
             Err(e) => eprintln!("Error fetching Bitcoin price: {}", e),
         }
-
+        // TODO:间隔时间需要修改，和websocket_server的时间间隔保持一致, 考虑websocket 从数据库拿数据
         tokio::time::sleep(tokio::time::Duration::from_secs(300)).await;
     }
 }
