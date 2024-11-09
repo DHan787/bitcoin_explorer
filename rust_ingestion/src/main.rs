@@ -120,12 +120,21 @@ async fn get_all_data() -> impl Responder {
 
     // 处理结果
     println!("fetched rows: {:?}", rows);
-    let data: Vec<_> = rows.iter().map(|row| {
-    let block_height: i32 = row.get(0);
-    let price: f64 = row.get(1);
-    let timestamp: String = row.get(2);
-    serde_json::json!({ "block_height": block_height, "price": price, "timestamp": timestamp })
-}).collect();
+    let data: Vec<_> = rows
+        .iter()
+        .map(|row| {
+            let block_height: i32 = row.get(0);
+            let price: Option<f64> = row.get(1); // 使用 Option<f64> 来处理可能为 NULL 的价格
+            let timestamp: String = row.get(2);
+
+            // 如果 price 是 None，则设置为 0.0
+            serde_json::json!({
+                "block_height": block_height,
+                "price": price.unwrap_or(0.0),
+                "timestamp": timestamp
+            })
+        })
+        .collect();
 
     println!("fetched data: {:?}", data);
     HttpResponse::Ok().json(data)
@@ -173,7 +182,7 @@ async fn run_ingestion() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => eprintln!("Error fetching Bitcoin price: {}", e),
         }
 
-        tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        tokio::time::sleep(tokio::time::Duration::from_secs(300)).await;
     }
 }
 
