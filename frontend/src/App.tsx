@@ -24,6 +24,7 @@ const RealTimeChart = () => {
   const [timestamps, setTimestamps] = useState<string[]>([]);
 
   // Fetch all data from the server initially
+  // test
   useEffect(() => {
     const fetchData = async () => {
       try {
