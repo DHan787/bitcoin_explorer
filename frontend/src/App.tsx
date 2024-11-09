@@ -42,7 +42,7 @@ const RealTimeChart = () => {
 
   // Setup WebSocket for real-time updates
   useEffect(() => {
-    const socket = new WebSocket('ws://34.171.207.200/:5001');
+    const socket = new WebSocket('ws://34.171.207.200:5001');
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setBlockHeights((prev) => [...prev, data.block_height]);
