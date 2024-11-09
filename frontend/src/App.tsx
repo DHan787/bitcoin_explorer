@@ -27,7 +27,7 @@ const RealTimeChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://34.171.207.200:5000/all-data');
+        const response = await fetch('http://34.171.207.200:5002/all-data');
         const data = await response.json();
 
         setBlockHeights(data.map((entry: any) => entry.block_height));

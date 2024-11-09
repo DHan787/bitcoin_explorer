@@ -171,7 +171,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Cors::permissive())
             .route("/all-data", web::get().to(get_all_data))
     })
-    .bind("0.0.0.0:5000")?
+    .bind("0.0.0.0:5002")?
     .run()
     .await
 }
