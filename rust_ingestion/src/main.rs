@@ -101,9 +101,9 @@ async fn get_all_data() -> impl Responder {
     });
 
     let rows = client
-        .query(
-            "
-        SELECT b.block_height, p.price_usd, b.block_timestamp
+    .query(
+        "
+        SELECT b.block_height, COALESCE(p.price_usd, latest_price.price_usd) AS price_usd, b.block_timestamp
         FROM block_data b
         LEFT JOIN LATERAL (
             SELECT price_usd, price_timestamp
@@ -112,11 +112,17 @@ async fn get_all_data() -> impl Responder {
             ORDER BY price_timestamp DESC
             LIMIT 1
         ) p ON true
+        LEFT JOIN LATERAL (
+            SELECT price_usd
+            FROM price_data
+            ORDER BY price_timestamp DESC
+            LIMIT 1
+        ) latest_price ON p.price_usd IS NULL
         ",
-            &[],
-        )
-        .await
-        .unwrap();
+        &[],
+    )
+    .await
+    .unwrap();
 
     // 处理结果
     println!("fetched rows: {:?}", rows);
@@ -124,13 +130,12 @@ async fn get_all_data() -> impl Responder {
         .iter()
         .map(|row| {
             let block_height: i32 = row.get(0);
-            let price: Option<f64> = row.get(1); // 使用 Option<f64> 来处理可能为 NULL 的价格
+            let price: f64 = row.get(1); // 这里由于确保有匹配数据，不再使用 Option
             let timestamp: String = row.get(2);
 
-            // 如果 price 是 None，则设置为 0.0
             serde_json::json!({
                 "block_height": block_height,
-                "price": price.unwrap_or(0.0),
+                "price": price,
                 "timestamp": timestamp
             })
         })
