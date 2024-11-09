@@ -18,6 +18,7 @@ services:
       - postgres
     ports:
       - "5001:5001"
+      - "5002:5002"
 
   backend:
     build: ./backend
