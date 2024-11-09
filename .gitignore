@@ -28,8 +28,6 @@ package-lock.json
 .env.production.local
 
 # Ignore Docker-related files
-**/Dockerfile
-docker-compose.override.yml
 
 # Ignore Rust build outputs
 target/
