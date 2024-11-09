@@ -100,7 +100,15 @@ async fn get_all_data() -> impl Responder {
         }
     });
 
-    let rows = client.query("SELECT block_height, price_usd, timestamp FROM block_data JOIN price_data ON block_data.timestamp = price_data.timestamp", &[]).await.unwrap();
+    let rows = client
+        .query(
+            "SELECT block_data.block_height, price_data.price_usd, block_data.block_timestamp \
+        FROM block_data \
+        JOIN price_data ON block_data.block_timestamp = price_data.price_timestamp",
+            &[],
+        )
+        .await
+        .unwrap();
     let data: Vec<_> = rows.iter().map(|row| {
         let block_height: i32 = row.get(0);
         let price: f64 = row.get(1);
