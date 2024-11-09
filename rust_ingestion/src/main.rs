@@ -104,7 +104,8 @@ async fn get_all_data() -> impl Responder {
     let rows = client
         .query(
             "
-        SELECT b.block_height, COALESCE(p.price_usd, 0.0) AS price_usd, b.block_timestamp
+        SELECT b.block_height, COALESCE(p.price_usd, 0.0) AS price_usd,
+        to_char(b.block_timestamp, 'YYYY-MM-DD HH24:MI:SS') AS block_timestamp
         FROM block_data b
         LEFT JOIN LATERAL (
             SELECT price_usd, price_timestamp
@@ -126,7 +127,7 @@ async fn get_all_data() -> impl Responder {
         .map(|row| {
             let block_height: i32 = row.get(0);
             let price: f64 = row.get(1); // 这里由于确保有匹配数据，不再使用 Option
-            let timestamp: String = row.get::<_, String>(2);
+            let timestamp: String = row.get(2);
 
             serde_json::json!({
                 "block_height": block_height,
